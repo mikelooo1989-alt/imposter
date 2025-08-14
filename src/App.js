@@ -319,8 +319,7 @@ export default function App() {
         const savedSettings = localStorage.getItem(STORAGE_KEY);
         if (savedSettings) {
             const parsed = JSON.parse(savedSettings);
-            // Stelle sicher, dass alle neuen Kategorien im State existieren
-            const allCategories = Object.keys(INITIAL_WORD_CATEGORIES);
+            // Stelle sicher, dass Felder für neue Versionen existieren
             if (!parsed.selectedCategories || !parsed.customWords) {
                 parsed.selectedCategories = ['Alltag'];
                 parsed.customWords = [];
