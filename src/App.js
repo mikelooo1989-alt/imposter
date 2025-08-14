@@ -96,7 +96,7 @@ const SettingsScreen = ({ initialSettings, onSave }) => {
             const newNames = Array.from({ length: numPlayers }, (_, i) => currentNames[i] || `Spieler ${i + 1}`);
             setSettings(s => ({ ...s, playerNames: newNames }));
         }
-    }, [settings.numPlayers]);
+    }, [settings.numPlayers, settings.playerNames]); // KORRIGIERT: settings.playerNames hinzugefügt
 
     const handleCategoryToggle = (category) => {
         const newSelection = settings.selectedCategories.includes(category)
