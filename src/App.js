@@ -2,12 +2,19 @@ import React, { useState, useCallback, useEffect } from 'react';
 
 // --- Konfiguration & Daten ---
 const INITIAL_WORD_CATEGORIES = {
-  'Allgemein': ['Apfel', 'Banane', 'Gitarre', 'Strand', 'Sonne', 'Mond', 'Fluss', 'Berg', 'Fahrrad', 'Auto', 'Buch', 'Kaffee', 'Pizza', 'Haus', 'Schule', 'Computer', 'Musik', 'Film', 'Traum', 'Reise', 'Freund', 'Familie', 'Lachen', 'Glück', 'Sommer', 'Winter', 'Frühling', 'Herbst', 'Blume', 'Baum', 'Wasser', 'Feuer', 'Erde', 'Luft', 'Stern', 'Wolke', 'Regen', 'Schnee'],
-  'Tiere': ['Hund', 'Katze', 'Elefant', 'Löwe', 'Tiger', 'Giraffe', 'Zebra', 'Affe', 'Pinguin', 'Krokodil', 'Schlange', 'Adler', 'Eule', 'Fisch', 'Wal', 'Delfin'],
-  'Berufe': ['Arzt', 'Lehrer', 'Polizist', 'Feuerwehrmann', 'Koch', 'Bäcker', 'Ingenieur', 'Pilot', 'Künstler', 'Musiker', 'Schauspieler', 'Anwalt', 'Richter', 'Wissenschaftler'],
-  'Eigene Wörter': []
+  'Rund um die Welt': ['Eiffelturm', 'Pyramiden', 'Big Ben', 'Freiheitsstatue', 'China', 'Australien', 'Brasilien', 'Ozean', 'Wüste', 'Dschungel'],
+  'Unterhaltung': ['Kino', 'Netflix', 'Marvel', 'Harry Potter', 'Videospiel', 'Konzert', 'Theater', 'Buch', 'Podcast', 'Meme'],
+  'Alltag': ['Supermarkt', 'Bett', 'Dusche', 'Kaffee', 'Handy', 'Schlüssel', 'Wecker', 'Zahnbürste', 'Müll', 'Arbeit'],
+  'Tier & Natur': ['Eichhörnchen', 'Fuchs', 'Bär', 'Wolf', 'Baum', 'Blume', 'Fluss', 'Berg', 'Gewitter', 'Regenbogen'],
+  'Sport & Freizeit': ['Fußball', 'Basketball', 'Fitnessstudio', 'Schwimmen', 'Fahrrad', 'Wandern', 'Joggen', 'Yoga', 'Hobby', 'Urlaub'],
+  'Wissen & Schule': ['Hausaufgabe', 'Prüfung', 'Lehrer', 'Note', 'Ferien', 'Universität', 'Bibliothek', 'Formel', 'Geschichte', 'Experiment'],
+  'Feste & Feiern': ['Geburtstag', 'Weihnachten', 'Silvester', 'Ostern', 'Hochzeit', 'Party', 'Geschenk', 'Kuchen', 'Feuerwerk', 'Karneval'],
+  'Deutsche Begriffe': ['Bratwurst', 'Sauerkraut', 'Autobahn', 'Gartenzwerg', 'Pünktlichkeit', 'Feierabend', 'Kater', 'Fernweh', 'Schadenfreude', 'Weltschmerz'],
+  'Stars & Promis': ['Taylor Swift', 'Beyoncé', 'Leonardo DiCaprio', 'Tom Holland', 'Heidi Klum', 'Elyas M\'Barek', 'Angela Merkel', 'Cristiano Ronaldo', 'Albert Einstein', 'Queen Elizabeth'],
+  'Spicy': ['Kuss', 'Tequila', 'Stripclub', 'Kondom', 'Affäre', 'Liebeskummer', 'One-Night-Stand', 'Swipen', 'Sexting', 'Nacktbild'],
+  'Eigene Begriffe': []
 };
-const STORAGE_KEY = 'imposterGameSettings_v2';
+const STORAGE_KEY = 'imposterGameSettings_v3'; // Version erhöht, um alte Einstellungen zurückzusetzen
 
 // --- Hilfsfunktionen ---
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -96,7 +103,7 @@ const SettingsScreen = ({ initialSettings, onSave }) => {
             const newNames = Array.from({ length: numPlayers }, (_, i) => currentNames[i] || `Spieler ${i + 1}`);
             setSettings(s => ({ ...s, playerNames: newNames }));
         }
-    }, [settings.numPlayers, settings.playerNames]); // KORRIGIERT: settings.playerNames hinzugefügt
+    }, [settings.numPlayers, settings.playerNames]);
 
     const handleCategoryToggle = (category) => {
         const newSelection = settings.selectedCategories.includes(category)
@@ -119,14 +126,13 @@ const SettingsScreen = ({ initialSettings, onSave }) => {
     };
 
     const handleSave = () => {
-        // Validation logic
         setError('');
         if (settings.selectedCategories.length === 0) {
             setError('Bitte wähle mindestens eine Wort-Kategorie aus.');
             return;
         }
-        if (settings.selectedCategories.includes('Eigene Wörter') && settings.customWords.length === 0) {
-            setError('Wenn "Eigene Wörter" gewählt ist, füge bitte mindestens ein Wort hinzu.');
+        if (settings.selectedCategories.includes('Eigene Begriffe') && settings.customWords.length === 0) {
+            setError('Wenn "Eigene Begriffe" gewählt ist, füge bitte mindestens ein Wort hinzu.');
             return;
         }
         onSave(settings);
@@ -171,11 +177,11 @@ const SettingsScreen = ({ initialSettings, onSave }) => {
                 ))}
             </div>
             
-            {settings.selectedCategories.includes('Eigene Wörter') && (
+            {settings.selectedCategories.includes('Eigene Begriffe') && (
                 <div style={styles.settingsSection}>
-                    <p style={styles.subtitle}>Eigene Wörter verwalten</p>
+                    <p style={styles.subtitle}>Eigene Begriffe verwalten</p>
                     <div style={styles.customWordInputContainer}>
-                        <GameInput value={newWord} onChange={(e) => setNewWord(e.target.value)} placeholder="Neues Wort..." />
+                        <GameInput value={newWord} onChange={(e) => setNewWord(e.target.value)} placeholder="Neuer Begriff..." />
                         <GameButton title="+" onClick={handleAddWord} style={{marginTop: 0, padding: '16px 20px'}} />
                     </div>
                     <ul style={styles.customWordList}>
@@ -302,7 +308,7 @@ export default function App() {
       numPlayers: 4,
       numImposters: 1,
       playerNames: Array.from({ length: 4 }, (_, i) => `Spieler ${i + 1}`),
-      selectedCategories: ['Allgemein'],
+      selectedCategories: ['Alltag'],
       customWords: [],
   });
   const [secretWord, setSecretWord] = useState('');
@@ -311,7 +317,16 @@ export default function App() {
   useEffect(() => {
     try {
         const savedSettings = localStorage.getItem(STORAGE_KEY);
-        if (savedSettings) setSettings(JSON.parse(savedSettings));
+        if (savedSettings) {
+            const parsed = JSON.parse(savedSettings);
+            // Stelle sicher, dass alle neuen Kategorien im State existieren
+            const allCategories = Object.keys(INITIAL_WORD_CATEGORIES);
+            if (!parsed.selectedCategories || !parsed.customWords) {
+                parsed.selectedCategories = ['Alltag'];
+                parsed.customWords = [];
+            }
+            setSettings(parsed);
+        }
     } catch (error) { console.error("Konnte Einstellungen nicht laden:", error); }
   }, []);
 
@@ -328,7 +343,7 @@ export default function App() {
     
     let wordPool = [];
     selectedCategories.forEach(category => {
-        if (category === 'Eigene Wörter') {
+        if (category === 'Eigene Begriffe') {
             wordPool.push(...customWords);
         } else {
             wordPool.push(...(INITIAL_WORD_CATEGORIES[category] || []));
@@ -336,7 +351,7 @@ export default function App() {
     });
 
     if (wordPool.length === 0) {
-        alert("Keine Wörter zum Spielen vorhanden! Bitte wähle in den Einstellungen Kategorien aus oder füge eigene Wörter hinzu.");
+        alert("Keine Wörter zum Spielen vorhanden! Bitte wähle in den Einstellungen Kategorien aus oder füge eigene Begriffe hinzu.");
         return;
     }
 
