@@ -16,7 +16,7 @@ const shuffleArray = (arr) => {
 };
 
 const CATEGORY_ICONS = {
-  'Rund um die Welt': '🌍',
+  'Rund um die Welt': '�',
   'Unterhaltung': '🎬',
   'Alltag': '🛒',
   'Tier & Natur': '🌳',
@@ -48,8 +48,32 @@ const styles = {
   // Reveal Screen Styles
   revealWrapper: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   revealCard: { backgroundColor: '#1f2937', padding: '40px', borderRadius: '20px', height: '350px', justifyContent: 'center', alignItems: 'center', width: '100%', border: '1px solid #374151', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
-  secretContent: { textAlign: 'center' },
-  coverContent: { textAlign: 'center', cursor: 'pointer', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', top: 0, left: 0, backgroundColor: '#1f2937', transition: 'transform 0.2s ease-out' },
+  secretContent: { 
+      textAlign: 'center',
+      userSelect: 'none', // Verhindert Textmarkierung
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none',
+      msUserSelect: 'none'
+  },
+  coverContent: { 
+      textAlign: 'center', 
+      cursor: 'pointer', 
+      width: '100%', 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      position: 'absolute', 
+      top: 0, 
+      left: 0, 
+      backgroundColor: '#1f2937', 
+      transition: 'transform 0.2s ease-out',
+      userSelect: 'none', // Verhindert Textmarkierung
+      WebkitUserSelect: 'none', // Für Safari
+      MozUserSelect: 'none', // Für Firefox
+      msUserSelect: 'none' // Für IE
+  },
   avatarImage: { width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', marginBottom: '20px', border: '3px solid #3b82f6', backgroundColor: 'white' },
   revealText: { fontSize: '1.75rem', fontWeight: 'bold', color: '#f9fafb', textAlign: 'center' },
   imposterText: { fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', textAlign: 'center' },
@@ -238,7 +262,8 @@ const RevealScreen = ({ players, secretWord, onRevealComplete }) => {
   const [isPressed, setIsPressed] = useState(false);
   const [hasBeenRevealed, setHasBeenRevealed] = useState(false);
 
-  const handlePress = () => {
+  const handlePress = (e) => {
+      e.preventDefault(); // Verhindert Standard-Browser-Aktionen wie Textmarkierung
       setIsPressed(true);
       setHasBeenRevealed(true);
   };
@@ -469,3 +494,4 @@ export default function App() {
     </div>
   );
 }
+�
