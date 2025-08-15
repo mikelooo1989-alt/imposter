@@ -51,8 +51,6 @@ const styles = {
   // Reveal Screen Styles
   revealWrapper: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   revealCard: { backgroundColor: '#1f2937', padding: '40px', borderRadius: '20px', height: '350px', justifyContent: 'center', alignItems: 'center', width: '100%', border: '1px solid #374151', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
-  secretContent: { textAlign: 'center', userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' },
-  coverContent: { textAlign: 'center', cursor: 'pointer', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', top: 0, left: 0, backgroundColor: '#1f2937', transition: 'transform 0.2s ease-out', userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' },
   avatarImage: { width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', marginBottom: '20px', border: '3px solid #3b82f6', backgroundColor: 'white' },
   revealText: { fontSize: '1.75rem', fontWeight: 'bold', color: '#f9fafb', textAlign: 'center' },
   imposterText: { fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', textAlign: 'center' },
@@ -161,7 +159,7 @@ const HelpScreen = ({ onBack }) => (
             <p style={styles.title}>Spielanleitung</p>
             <div style={styles.helpContent}>
                 <h3 style={styles.helpContentH3}>Ziel des Spiels</h3>
-                <p>Die <strong>Bürger</strong> müssen durch kluge Hinweise und Diskussionen den oder die <strong>Imposter</strong> entlarven. Die <strong>Imposter</strong> müssen unentdeckt bleiben, indem sie so tun, als wüssten sie das geheime Wort.</p>
+                <p>Die <strong>Bürger</strong> müssen durch kluge Hinweise und Diskussionen den oder die <strong>Imposter</strong> entlarven. Die <strong>Imposter</strong> müssen unentdeckt bleiben, indem sie so tun, als wüssten sie das geheime Wort und am Ende versuchen, es zu erraten.</p>
                 
                 <h3 style={styles.helpContentH3}>Vorbereitung</h3>
                 <p>Legt in den <strong>Einstellungen</strong> die Anzahl der Spieler und Imposter fest, vergebt Namen und wählt die Wort-Kategorien aus, mit denen ihr spielen wollt.</p>
@@ -297,27 +295,23 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
 
 const RevealScreen = ({ players, secretWord, onRevealComplete, onRequestExit }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPressed, setIsPressed] = useState(false);
-  const [hasBeenRevealed, setHasBeenRevealed] = useState(false);
-
-  const handlePress = (e) => {
-      e.preventDefault();
-      setIsPressed(true);
-      setHasBeenRevealed(true);
-  };
-  const handleRelease = () => setIsPressed(false);
+  const [isRevealed, setIsRevealed] = useState(false);
 
   const handleNext = () => {
-    if (currentIndex < players.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setIsPressed(false);
-        setHasBeenRevealed(false);
+    if (isRevealed) {
+        if (currentIndex < players.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+            setIsRevealed(false);
+        } else {
+            onRevealComplete();
+        }
     } else {
-        onRevealComplete();
+        setIsRevealed(true);
     }
   };
 
   const currentPlayer = players[currentIndex];
+  const buttonText = isRevealed ? 'Verstanden & Weitergeben' : 'Rolle aufdecken';
   
   return (
     <>
@@ -328,25 +322,21 @@ const RevealScreen = ({ players, secretWord, onRevealComplete, onRequestExit }) 
         <div style={styles.screenContainer}>
             <div style={styles.revealWrapper}>
                 <div style={styles.revealCard}>
-                    <div style={styles.secretContent}>
-                        <p style={currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>
-                            {currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`}
-                        </p>
-                    </div>
-                    <div 
-                        style={{...styles.coverContent, transform: isPressed ? 'translateY(-100%)' : 'translateY(0)'}}
-                        onMouseDown={handlePress}
-                        onMouseUp={handleRelease}
-                        onMouseLeave={handleRelease}
-                        onTouchStart={handlePress}
-                        onTouchEnd={handleRelease}
-                    >
-                        <img src={currentPlayer.avatarUrl} alt={`Avatar für ${currentPlayer.name}`} style={styles.avatarImage} />
-                        <p style={styles.revealText}>{currentPlayer.name} ist dran</p>
-                        <p style={styles.revealSubtext}>Gedrückt halten zum Aufdecken</p>
-                    </div>
+                    {isRevealed ? (
+                        <div style={styles.secretContent}>
+                            <p style={currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>
+                                {currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <img src={currentPlayer.avatarUrl} alt={`Avatar für ${currentPlayer.name}`} style={styles.avatarImage} />
+                            <p style={styles.revealText}>{currentPlayer.name} ist dran</p>
+                            <p style={styles.revealSubtext}>Bist du bereit?</p>
+                        </>
+                    )}
                 </div>
-                <GameButton title="Nächster Spieler" onClick={handleNext} disabled={!hasBeenRevealed} />
+                <GameButton title={buttonText} onClick={handleNext} />
             </div>
         </div>
     </>
@@ -452,6 +442,9 @@ export default function App() {
   const [votes, setVotes] = useState({});
 
   useEffect(() => {
+    // Verhindert "Pull-to-refresh" auf mobilen Geräten
+    document.body.style.overscrollBehaviorY = 'contain';
+
     fetch('/word-categories.json')
       .then(response => response.json())
       .then(data => setWordCategories(data))
@@ -468,6 +461,11 @@ export default function App() {
             setSettings(parsed);
         }
     } catch (error) { console.error("Konnte Einstellungen nicht laden:", error); }
+    
+    // Cleanup-Funktion, um den Style wieder zu entfernen
+    return () => {
+        document.body.style.overscrollBehaviorY = 'auto';
+    };
   }, []);
 
   const handleSaveSettings = (newSettings) => {
@@ -528,7 +526,7 @@ export default function App() {
         return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
     }
 
-    const nonScrollableStates = ['welcome', 'reveal', 'discussionStart', 'help'];
+    const nonScrollableStates = ['welcome', 'reveal', 'discussionStart'];
     const safeAreaStyle = {
       ...styles.safeArea,
       overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto',
