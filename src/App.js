@@ -15,7 +15,7 @@ const shuffleArray = (arr) => {
 };
 
 const CATEGORY_ICONS = {
-  'Rund um die Welt': '🌍',
+  'Rund um die Welt': '�',
   'Unterhaltung': '🎬',
   'Alltag': '🛒',
   'Tier & Natur': '🌳',
@@ -381,19 +381,22 @@ export default function App() {
     const loadData = async () => {
         try {
             const response = await fetch('/word-categories.json');
+            if (!response.ok) throw new Error('Network response was not ok');
             const categoriesData = await response.json();
             setWordCategories(categoriesData);
+
             const savedSettings = localStorage.getItem(STORAGE_KEY);
             if (savedSettings) {
                 const parsed = JSON.parse(savedSettings);
-                if (!parsed.selectedCategories || !parsed.customWords) {
-                    parsed.selectedCategories = ['Alltag'];
-                    parsed.customWords = [];
+                if (parsed.selectedCategories && parsed.customWords) {
+                    setSettings(parsed);
                 }
-                setSettings(parsed);
             }
             setGameState('welcome');
-        } catch (error) { console.error("Fehler beim Initialisieren der App:", error); }
+        } catch (error) {
+            console.error("Fehler beim Initialisieren der App:", error);
+            setGameState('error'); // Zeige einen Fehlerbildschirm an
+        }
     };
     loadData();
     return () => { document.body.style.overscrollBehaviorY = 'auto'; };
@@ -445,15 +448,16 @@ export default function App() {
   const nonScrollableStates = ['welcome', 'reveal', 'discussionStart'];
   const safeAreaStyle = { ...styles.safeArea, overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto' };
 
-  const CurrentScreen = () => {
+  const renderContent = () => {
       switch (gameState) {
+          case 'loading': return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
+          case 'error': return <div style={{...styles.screenContainer, color: 'white'}}><p>Ein Fehler ist aufgetreten. Bitte lade die Seite neu.</p></div>;
           case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
           case 'help': return <HelpScreen onBack={() => setGameState('welcome')} />;
           case 'reveal': return <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => { setStartingPlayer(getRandomElement(players)); setGameState('discussionStart'); }} />;
           case 'discussionStart': return <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
           case 'voting': return <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => { setVotes(finalVotes); setGameState('result'); }} />;
           case 'result': return <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
-          case 'loading': return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
           default: return <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
       }
   };
@@ -461,7 +465,7 @@ export default function App() {
   return (
     <div style={safeAreaStyle}>
       <div style={styles.container}>
-          <CurrentScreen />
+          {renderContent()}
           {showExitConfirm && (
               <ConfirmationDialog 
                   message="Möchtest du das aktuelle Spiel wirklich abbrechen?"
