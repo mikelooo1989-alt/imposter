@@ -17,7 +17,7 @@ const shuffleArray = (arr) => {
 
 const CATEGORY_ICONS = {
   'Rund um die Welt': '🌍',
-  'Unterhaltung': '🎬',
+  'Unterhaltung': '�',
   'Alltag': '🛒',
   'Tier & Natur': '🌳',
   'Sport & Freizeit': '⚽',
@@ -323,7 +323,7 @@ const RevealScreen = ({ players, secretWord, onRevealComplete, onRequestExit }) 
             <div style={styles.revealWrapper}>
                 <div style={styles.revealCard}>
                     {isRevealed ? (
-                        <div style={styles.secretContent}>
+                        <div>
                             <p style={currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>
                                 {currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`}
                             </p>
@@ -521,50 +521,47 @@ export default function App() {
     setGameState('welcome');
   };
 
-  const renderScreen = () => {
-    if (!wordCategories) {
-        return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
-    }
+  // --- RENDER LOGIK ---
+  if (!wordCategories) {
+      return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
+  }
 
-    const nonScrollableStates = ['welcome', 'reveal', 'discussionStart'];
-    const safeAreaStyle = {
-      ...styles.safeArea,
-      overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto',
-    };
-
-    const screenContent = () => {
-        switch (gameState) {
-            case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
-            case 'help': return <HelpScreen onBack={() => setGameState('welcome')} />;
-            case 'reveal': return <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => {
-                setStartingPlayer(getRandomElement(players));
-                setGameState('discussionStart');
-            }} />;
-            case 'discussionStart': return <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
-            case 'voting': return <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => {
-                setVotes(finalVotes);
-                setGameState('result');
-            }} />;
-            case 'result': return <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
-            default: return <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
-        }
-    };
-
-    return (
-      <div style={safeAreaStyle}>
-        <div style={styles.container}>
-            {screenContent()}
-            {showExitConfirm && (
-                <ConfirmationDialog 
-                    message="Möchtest du das aktuelle Spiel wirklich abbrechen?"
-                    onConfirm={resetGame}
-                    onCancel={() => setShowExitConfirm(false)}
-                />
-            )}
-        </div>
-      </div>
-    );
+  const nonScrollableStates = ['welcome', 'reveal', 'discussionStart'];
+  const safeAreaStyle = {
+    ...styles.safeArea,
+    overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto',
   };
 
-  return renderScreen();
+  const screenContent = () => {
+      switch (gameState) {
+          case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
+          case 'help': return <HelpScreen onBack={() => setGameState('welcome')} />;
+          case 'reveal': return <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => {
+              setStartingPlayer(getRandomElement(players));
+              setGameState('discussionStart');
+          }} />;
+          case 'discussionStart': return <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
+          case 'voting': return <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => {
+              setVotes(finalVotes);
+              setGameState('result');
+          }} />;
+          case 'result': return <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
+          default: return <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
+      }
+  };
+
+  return (
+    <div style={safeAreaStyle}>
+      <div style={styles.container}>
+          {screenContent()}
+          {showExitConfirm && (
+              <ConfirmationDialog 
+                  message="Möchtest du das aktuelle Spiel wirklich abbrechen?"
+                  onConfirm={resetGame}
+                  onCancel={() => setShowExitConfirm(false)}
+              />
+          )}
+      </div>
+    </div>
+  );
 }
