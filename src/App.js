@@ -15,7 +15,7 @@ const shuffleArray = (arr) => {
 };
 
 const CATEGORY_ICONS = {
-  'Rund um die Welt': '�',
+  'Rund um die Welt': '🌍',
   'Unterhaltung': '🎬',
   'Alltag': '🛒',
   'Tier & Natur': '🌳',
@@ -395,7 +395,7 @@ export default function App() {
             setGameState('welcome');
         } catch (error) {
             console.error("Fehler beim Initialisieren der App:", error);
-            setGameState('error'); // Zeige einen Fehlerbildschirm an
+            setGameState('error');
         }
     };
     loadData();
@@ -449,17 +449,24 @@ export default function App() {
   const safeAreaStyle = { ...styles.safeArea, overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto' };
 
   const renderContent = () => {
-      switch (gameState) {
-          case 'loading': return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
-          case 'error': return <div style={{...styles.screenContainer, color: 'white'}}><p>Ein Fehler ist aufgetreten. Bitte lade die Seite neu.</p></div>;
-          case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
-          case 'help': return <HelpScreen onBack={() => setGameState('welcome')} />;
-          case 'reveal': return <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => { setStartingPlayer(getRandomElement(players)); setGameState('discussionStart'); }} />;
-          case 'discussionStart': return <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
-          case 'voting': return <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => { setVotes(finalVotes); setGameState('result'); }} />;
-          case 'result': return <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
-          default: return <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
+      if (gameState === 'loading') {
+          return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
       }
+      if (gameState === 'error') {
+          return <div style={{...styles.screenContainer, color: 'white'}}><p>Ein Fehler ist aufgetreten. Bitte lade die Seite neu.</p></div>;
+      }
+      
+      const screenMap = {
+          'settings': <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />,
+          'help': <HelpScreen onBack={() => setGameState('welcome')} />,
+          'reveal': <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => { setStartingPlayer(getRandomElement(players)); setGameState('discussionStart'); }} />,
+          'discussionStart': <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />,
+          'voting': <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => { setVotes(finalVotes); setGameState('result'); }} />,
+          'result': <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />,
+          'welcome': <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />
+      };
+
+      return screenMap[gameState] || <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
   };
 
   return (
