@@ -1,20 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 
 // --- Konfiguration & Daten ---
-const INITIAL_WORD_CATEGORIES = {
-  'Rund um die Welt': ['Eiffelturm', 'Pyramiden', 'Big Ben', 'Freiheitsstatue', 'China', 'Australien', 'Brasilien', 'Ozean', 'Wüste', 'Dschungel'],
-  'Unterhaltung': ['Kino', 'Netflix', 'Marvel', 'Harry Potter', 'Videospiel', 'Konzert', 'Theater', 'Buch', 'Podcast', 'Meme'],
-  'Alltag': ['Supermarkt', 'Bett', 'Dusche', 'Kaffee', 'Handy', 'Schlüssel', 'Wecker', 'Zahnbürste', 'Müll', 'Arbeit'],
-  'Tier & Natur': ['Eichhörnchen', 'Fuchs', 'Bär', 'Wolf', 'Baum', 'Blume', 'Fluss', 'Berg', 'Gewitter', 'Regenbogen'],
-  'Sport & Freizeit': ['Fußball', 'Basketball', 'Fitnessstudio', 'Schwimmen', 'Fahrrad', 'Wandern', 'Joggen', 'Yoga', 'Hobby', 'Urlaub'],
-  'Wissen & Schule': ['Hausaufgabe', 'Prüfung', 'Lehrer', 'Note', 'Ferien', 'Universität', 'Bibliothek', 'Formel', 'Geschichte', 'Experiment'],
-  'Feste & Feiern': ['Geburtstag', 'Weihnachten', 'Silvester', 'Ostern', 'Hochzeit', 'Party', 'Geschenk', 'Kuchen', 'Feuerwerk', 'Karneval'],
-  'Deutsche Begriffe': ['Bratwurst', 'Sauerkraut', 'Autobahn', 'Gartenzwerg', 'Pünktlichkeit', 'Feierabend', 'Kater', 'Fernweh', 'Schadenfreude', 'Weltschmerz'],
-  'Stars & Promis': ['Taylor Swift', 'Beyoncé', 'Leonardo DiCaprio', 'Tom Holland', 'Heidi Klum', 'Elyas M\'Barek', 'Angela Merkel', 'Cristiano Ronaldo', 'Albert Einstein', 'Queen Elizabeth'],
-  'Spicy': ['Kuss', 'Tequila', 'Stripclub', 'Kondom', 'Affäre', 'Liebeskummer', 'One-Night-Stand', 'Swipen', 'Sexting', 'Nacktbild'],
-  'Eigene Begriffe': []
-};
-const STORAGE_KEY = 'imposterGameSettings_v3'; // Version erhöht, um alte Einstellungen zurückzusetzen
+// Die Wörter werden jetzt aus public/word-categories.json geladen
+const STORAGE_KEY = 'imposterGameSettings_v4'; // Version erhöht
 
 // --- Hilfsfunktionen ---
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -91,7 +79,7 @@ const WelcomeScreen = ({ onStart, onGoToSettings }) => (
   </div>
 );
 
-const SettingsScreen = ({ initialSettings, onSave }) => {
+const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
     const [settings, setSettings] = useState(initialSettings);
     const [newWord, setNewWord] = useState('');
     const [error, setError] = useState('');
@@ -169,7 +157,7 @@ const SettingsScreen = ({ initialSettings, onSave }) => {
 
             <div style={styles.settingsSection}>
                 <p style={styles.subtitle}>Wort-Kategorien</p>
-                {Object.keys(INITIAL_WORD_CATEGORIES).map(category => (
+                {Object.keys(wordCategories).map(category => (
                     <div key={category} style={styles.checkboxContainer}>
                         <input type="checkbox" id={category} checked={settings.selectedCategories.includes(category)} onChange={() => handleCategoryToggle(category)} style={styles.checkbox} />
                         <label htmlFor={category} style={{color: 'white', cursor: 'pointer'}}>{category}</label>
@@ -304,6 +292,7 @@ export default function App() {
   const [players, setPlayers] = useState([]);
   const [revealOrder, setRevealOrder] = useState([]);
   const [startingPlayer, setStartingPlayer] = useState(null);
+  const [wordCategories, setWordCategories] = useState(null);
   const [settings, setSettings] = useState({
       numPlayers: 4,
       numImposters: 1,
@@ -315,11 +304,17 @@ export default function App() {
   const [votes, setVotes] = useState({});
 
   useEffect(() => {
+    // Lade die Wortkategorien aus der externen Datei
+    fetch('/word-categories.json')
+      .then(response => response.json())
+      .then(data => setWordCategories(data))
+      .catch(error => console.error("Konnte Wortkategorien nicht laden:", error));
+
+    // Lade gespeicherte Benutzereinstellungen
     try {
         const savedSettings = localStorage.getItem(STORAGE_KEY);
         if (savedSettings) {
             const parsed = JSON.parse(savedSettings);
-            // Stelle sicher, dass Felder für neue Versionen existieren
             if (!parsed.selectedCategories || !parsed.customWords) {
                 parsed.selectedCategories = ['Alltag'];
                 parsed.customWords = [];
@@ -345,7 +340,7 @@ export default function App() {
         if (category === 'Eigene Begriffe') {
             wordPool.push(...customWords);
         } else {
-            wordPool.push(...(INITIAL_WORD_CATEGORIES[category] || []));
+            wordPool.push(...(wordCategories[category] || []));
         }
     });
 
@@ -380,8 +375,12 @@ export default function App() {
   };
 
   const renderScreen = () => {
+    if (!wordCategories) {
+        return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
+    }
+
     switch (gameState) {
-      case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} />;
+      case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
       case 'reveal': return <RevealScreen players={revealOrder} secretWord={secretWord} onRevealComplete={() => {
           setStartingPlayer(getRandomElement(players));
           setGameState('discussionStart');
