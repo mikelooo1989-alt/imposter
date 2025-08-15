@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 
 // --- Konfiguration & Daten ---
 // Die Wörter werden jetzt aus public/word-categories.json geladen
-const STORAGE_KEY = 'imposterGameSettings_v4'; // Version erhöht
+const STORAGE_KEY = 'imposterGameSettings_v5'; // Version erhöht
 
 // --- Hilfsfunktionen ---
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -14,6 +14,21 @@ const shuffleArray = (arr) => {
     }
     return newArr;
 };
+
+const CATEGORY_ICONS = {
+  'Rund um die Welt': '🌍',
+  'Unterhaltung': '🎬',
+  'Alltag': '🛒',
+  'Tier & Natur': '🌳',
+  'Sport & Freizeit': '⚽',
+  'Wissen & Schule': '🎓',
+  'Feste & Feiern': '🎉',
+  'Deutsche Begriffe': '🥨',
+  'Stars & Promis': '⭐',
+  'Spicy': '🌶️',
+  'Eigene Begriffe': '✏️'
+};
+
 
 // --- Styling-Objekt ---
 const styles = {
@@ -30,16 +45,22 @@ const styles = {
   inputGroup: { width: '90%', maxWidth: '400px', marginBottom: '24px' },
   label: { color: '#d1d5db', fontSize: '16px', marginBottom: '8px', display: 'block' },
   errorText: { color: '#ef4444', marginTop: '10px', textAlign: 'center' },
-  revealCard: { backgroundColor: '#1f2937', padding: '40px', borderRadius: '20px', minHeight: '250px', justifyContent: 'center', alignItems: 'center', width: '100%', maxWidth: '400px', marginBottom: '40px', border: '1px solid #374151', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' },
+  // Reveal Screen Styles
+  revealWrapper: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  revealCard: { backgroundColor: '#1f2937', padding: '40px', borderRadius: '20px', height: '350px', justifyContent: 'center', alignItems: 'center', width: '100%', border: '1px solid #374151', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
+  secretContent: { textAlign: 'center' },
+  coverContent: { textAlign: 'center', cursor: 'pointer', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', top: 0, left: 0, backgroundColor: '#1f2937', transition: 'transform 0.2s ease-out' },
   avatarImage: { width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', marginBottom: '20px', border: '3px solid #3b82f6', backgroundColor: 'white' },
   revealText: { fontSize: '1.75rem', fontWeight: 'bold', color: '#f9fafb', textAlign: 'center' },
   imposterText: { fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', textAlign: 'center' },
   revealSubtext: { fontSize: '1rem', color: '#9ca3af', marginTop: '16px', textAlign: 'center' },
+  // Voting Screen Styles
   votingRow: { width: '100%', maxWidth: '500px', padding: '16px 0', borderBottom: '1px solid #374151' },
   votingPlayerText: { color: '#f9fafb', fontSize: '18px', marginBottom: '12px' },
   voteButtonsContainer: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
   voteButton: { backgroundColor: '#4b5563', minWidth: '50px', height: '50px', borderRadius: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '8px', padding: '0 15px', border: 'none', cursor: 'pointer', color: '#ffffff', fontSize: '16px', fontWeight: 'bold' },
   voteButtonSelected: { backgroundColor: '#3b82f6', transform: 'scale(1.1)' },
+  // Result Screen Styles
   resultDetails: { backgroundColor: '#1f2937', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '500px', marginTop: '20px' },
   resultHeader: { color: '#f9fafb', fontSize: '20px', fontWeight: 'bold', marginBottom: '12px', textAlign: 'center' },
   resultPlayerRow: { display: 'flex', alignItems: 'center', margin: '8px 0' },
@@ -47,6 +68,7 @@ const styles = {
   resultPlayerText: { color: '#d1d5db', fontSize: '18px', padding: '4px 0' },
   imposterTextSmall: { color: '#ef4444', fontWeight: 'bold' },
   citizenTextSmall: { color: '#22c55e', fontWeight: 'bold' },
+  // Settings Screen Styles
   settingsSection: { width: '90%', maxWidth: '400px', marginBottom: '30px' },
   checkboxContainer: { display: 'flex', alignItems: 'center', marginBottom: '10px' },
   checkbox: { marginRight: '10px', width: '20px', height: '20px', cursor: 'pointer' },
@@ -54,6 +76,9 @@ const styles = {
   customWordList: { listStyle: 'none', padding: 0, marginTop: '15px' },
   customWordItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#374151', padding: '8px 12px', borderRadius: '8px', marginBottom: '8px', color: '#f9fafb' },
   deleteButton: { backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontWeight: 'bold' },
+  numberStepper: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#374151', borderRadius: '12px', padding: '8px' },
+  stepperButton: { backgroundColor: '#4b5563', color: 'white', border: 'none', borderRadius: '8px', width: '40px', height: '40px', fontSize: '24px', cursor: 'pointer' },
+  stepperValue: { color: '#f9fafb', fontSize: '20px', fontWeight: 'bold', margin: '0 20px' },
 };
 
 // --- UI Komponenten ---
@@ -67,6 +92,25 @@ const GameButton = ({ title, onClick, style, disabled = false, secondary = false
 const GameInput = ({ value, onChange, placeholder, type = 'text' }) => (
   <input style={styles.input} value={value} onChange={onChange} placeholder={placeholder} type={type} />
 );
+
+const NumberStepper = ({ value, onChange, min, max }) => {
+    const handleDecrement = () => {
+        const newValue = Math.max(min, value - 1);
+        onChange(newValue);
+    };
+    const handleIncrement = () => {
+        const newValue = Math.min(max, value + 1);
+        onChange(newValue);
+    };
+    return (
+        <div style={styles.numberStepper}>
+            <button onClick={handleDecrement} style={styles.stepperButton}>-</button>
+            <span style={styles.stepperValue}>{value}</span>
+            <button onClick={handleIncrement} style={styles.stepperButton}>+</button>
+        </div>
+    );
+};
+
 
 // --- Bildschirme der App ---
 
@@ -88,7 +132,7 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
         const numPlayers = parseInt(settings.numPlayers, 10) || 0;
         const currentNames = settings.playerNames || [];
         if (currentNames.length !== numPlayers) {
-            const newNames = Array.from({ length: numPlayers }, (_, i) => currentNames[i] || `Spieler ${i + 1}`);
+            const newNames = Array.from({ length: numPlayers }, (_, i) => currentNames[i] || '');
             setSettings(s => ({ ...s, playerNames: newNames }));
         }
     }, [settings.numPlayers, settings.playerNames]);
@@ -134,11 +178,11 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
                 <p style={styles.subtitle}>Allgemein</p>
                 <div style={styles.inputGroup}>
                     <label style={styles.label}>Anzahl der Spieler:</label>
-                    <GameInput value={settings.numPlayers} onChange={(e) => setSettings(s => ({...s, numPlayers: e.target.value}))} type="number" />
+                    <NumberStepper value={settings.numPlayers} onChange={(val) => setSettings(s => ({...s, numPlayers: val}))} min={3} max={12} />
                 </div>
                 <div style={styles.inputGroup}>
                     <label style={styles.label}>Anzahl der Imposter:</label>
-                    <GameInput value={settings.numImposters} onChange={(e) => setSettings(s => ({...s, numImposters: e.target.value}))} type="number" />
+                    <NumberStepper value={settings.numImposters} onChange={(val) => setSettings(s => ({...s, numImposters: val}))} min={1} max={settings.numPlayers - 1} />
                 </div>
             </div>
 
@@ -160,7 +204,7 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
                 {Object.keys(wordCategories).map(category => (
                     <div key={category} style={styles.checkboxContainer}>
                         <input type="checkbox" id={category} checked={settings.selectedCategories.includes(category)} onChange={() => handleCategoryToggle(category)} style={styles.checkbox} />
-                        <label htmlFor={category} style={{color: 'white', cursor: 'pointer'}}>{category}</label>
+                        <label htmlFor={category} style={{color: 'white', cursor: 'pointer'}}>{CATEGORY_ICONS[category] || '📁'} {category}</label>
                     </div>
                 ))}
             </div>
@@ -191,29 +235,51 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
 
 const RevealScreen = ({ players, secretWord, onRevealComplete }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isRevealed, setIsRevealed] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [hasBeenRevealed, setHasBeenRevealed] = useState(false);
+
+  const handlePress = () => {
+      setIsPressed(true);
+      setHasBeenRevealed(true);
+  };
+  const handleRelease = () => setIsPressed(false);
 
   const handleNext = () => {
-    if (isRevealed) {
-      if (currentIndex < players.length - 1) {
+    if (currentIndex < players.length - 1) {
         setCurrentIndex(currentIndex + 1);
-        setIsRevealed(false);
-      } else { onRevealComplete(); }
-    } else { setIsRevealed(true); }
+        setIsPressed(false);
+        setHasBeenRevealed(false);
+    } else {
+        onRevealComplete();
+    }
   };
 
   const currentPlayer = players[currentIndex];
-  const revealText = isRevealed ? (currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`) : `${currentPlayer.name} ist dran`;
-  const buttonText = isRevealed ? 'Verstanden & Weitergeben' : 'Rolle aufdecken';
-
+  
   return (
     <div style={styles.screenContainer}>
-      <div style={styles.revealCard}>
-        {!isRevealed && (<img src={currentPlayer.avatarUrl} alt={`Avatar für ${currentPlayer.name}`} style={styles.avatarImage} />)}
-        <p style={isRevealed && currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>{revealText}</p>
-        {!isRevealed && <p style={styles.revealSubtext}>Bist du bereit? Schau allein auf den Bildschirm.</p>}
-      </div>
-      <GameButton title={buttonText} onClick={handleNext} />
+        <div style={styles.revealWrapper}>
+            <div style={styles.revealCard}>
+                <div style={styles.secretContent}>
+                    <p style={currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>
+                        {currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`}
+                    </p>
+                </div>
+                <div 
+                    style={{...styles.coverContent, transform: isPressed ? 'translateY(-100%)' : 'translateY(0)'}}
+                    onMouseDown={handlePress}
+                    onMouseUp={handleRelease}
+                    onMouseLeave={handleRelease}
+                    onTouchStart={handlePress}
+                    onTouchEnd={handleRelease}
+                >
+                    <img src={currentPlayer.avatarUrl} alt={`Avatar für ${currentPlayer.name}`} style={styles.avatarImage} />
+                    <p style={styles.revealText}>{currentPlayer.name} ist dran</p>
+                    <p style={styles.revealSubtext}>Gedrückt halten zum Aufdecken</p>
+                </div>
+            </div>
+            <GameButton title="Nächster Spieler" onClick={handleNext} disabled={!hasBeenRevealed} />
+        </div>
     </div>
   );
 };
@@ -296,7 +362,7 @@ export default function App() {
   const [settings, setSettings] = useState({
       numPlayers: 4,
       numImposters: 1,
-      playerNames: Array.from({ length: 4 }, (_, i) => `Spieler ${i + 1}`),
+      playerNames: Array.from({ length: 4 }, (_, i) => ''),
       selectedCategories: ['Alltag'],
       customWords: [],
   });
@@ -304,13 +370,11 @@ export default function App() {
   const [votes, setVotes] = useState({});
 
   useEffect(() => {
-    // Lade die Wortkategorien aus der externen Datei
     fetch('/word-categories.json')
       .then(response => response.json())
       .then(data => setWordCategories(data))
       .catch(error => console.error("Konnte Wortkategorien nicht laden:", error));
 
-    // Lade gespeicherte Benutzereinstellungen
     try {
         const savedSettings = localStorage.getItem(STORAGE_KEY);
         if (savedSettings) {
@@ -348,8 +412,10 @@ export default function App() {
         alert("Keine Wörter zum Spielen vorhanden! Bitte wähle in den Einstellungen Kategorien aus oder füge eigene Begriffe hinzu.");
         return;
     }
+    
+    const finalPlayerNames = playerNames.map((name, i) => name.trim() === '' ? `Spieler ${i + 1}` : name.trim());
 
-    let playerArray = playerNames.map((name, i) => ({
+    let playerArray = finalPlayerNames.map((name, i) => ({
       id: i + 1, name, role: 'citizen',
       avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}`
     }));
