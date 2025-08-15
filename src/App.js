@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 
 // --- Konfiguration & Daten ---
-// Die Wörter werden jetzt aus public/word-categories.json geladen
-const STORAGE_KEY = 'imposterGameSettings_v5'; // Version erhöht
+const STORAGE_KEY = 'imposterGameSettings_v5';
 
 // --- Hilfsfunktionen ---
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -29,10 +28,9 @@ const CATEGORY_ICONS = {
   'Eigene Begriffe': '✏️'
 };
 
-
 // --- Styling-Objekt ---
 const styles = {
-  safeArea: { flex: 1, backgroundColor: '#111827', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', height: '100vh' /* overflowY wird jetzt dynamisch gesetzt */ },
+  safeArea: { flex: 1, backgroundColor: '#111827', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', height: '100vh' },
   container: { flex: 1, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative' },
   screenContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', display: 'flex', flexDirection: 'column' },
   scrollableScreenContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0', width: '100%' },
@@ -45,23 +43,19 @@ const styles = {
   inputGroup: { width: '90%', maxWidth: '400px', marginBottom: '24px' },
   label: { color: '#d1d5db', fontSize: '16px', marginBottom: '8px', display: 'block' },
   errorText: { color: '#ef4444', marginTop: '10px', textAlign: 'center' },
-  // Header Buttons
   headerContainer: { position: 'absolute', top: 20, left: 20, right: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 },
   headerButton: { backgroundColor: 'transparent', color: '#9ca3af', border: 'none', fontSize: '2rem', cursor: 'pointer', width: '44px', height: '44px' },
-  // Reveal Screen Styles
   revealWrapper: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   revealCard: { backgroundColor: '#1f2937', padding: '40px', borderRadius: '20px', height: '350px', justifyContent: 'center', alignItems: 'center', width: '100%', border: '1px solid #374151', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' },
   avatarImage: { width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', marginBottom: '20px', border: '3px solid #3b82f6', backgroundColor: 'white' },
   revealText: { fontSize: '1.75rem', fontWeight: 'bold', color: '#f9fafb', textAlign: 'center' },
   imposterText: { fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', textAlign: 'center' },
   revealSubtext: { fontSize: '1rem', color: '#9ca3af', marginTop: '16px', textAlign: 'center' },
-  // Voting Screen Styles
   votingRow: { width: '100%', maxWidth: '500px', padding: '16px 0', borderBottom: '1px solid #374151' },
   votingPlayerText: { color: '#f9fafb', fontSize: '18px', marginBottom: '12px' },
   voteButtonsContainer: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
   voteButton: { backgroundColor: '#4b5563', minWidth: '50px', height: '50px', borderRadius: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '8px', padding: '0 15px', border: 'none', cursor: 'pointer', color: '#ffffff', fontSize: '16px', fontWeight: 'bold' },
   voteButtonSelected: { backgroundColor: '#3b82f6', transform: 'scale(1.1)' },
-  // Result Screen Styles
   resultDetails: { backgroundColor: '#1f2937', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '500px', marginTop: '20px' },
   resultHeader: { color: '#f9fafb', fontSize: '20px', fontWeight: 'bold', marginBottom: '12px', textAlign: 'center' },
   resultPlayerRow: { display: 'flex', alignItems: 'center', margin: '8px 0' },
@@ -69,7 +63,6 @@ const styles = {
   resultPlayerText: { color: '#d1d5db', fontSize: '18px', padding: '4px 0' },
   imposterTextSmall: { color: '#ef4444', fontWeight: 'bold' },
   citizenTextSmall: { color: '#22c55e', fontWeight: 'bold' },
-  // Settings Screen Styles
   settingsSection: { width: '90%', maxWidth: '400px', marginBottom: '30px' },
   checkboxContainer: { display: 'flex', alignItems: 'center', marginBottom: '10px' },
   checkbox: { marginRight: '10px', width: '20px', height: '20px', cursor: 'pointer' },
@@ -80,10 +73,8 @@ const styles = {
   numberStepper: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#374151', borderRadius: '12px', padding: '8px' },
   stepperButton: { backgroundColor: '#4b5563', color: 'white', border: 'none', borderRadius: '8px', width: '40px', height: '40px', fontSize: '24px', cursor: 'pointer' },
   stepperValue: { color: '#f9fafb', fontSize: '20px', fontWeight: 'bold', margin: '0 20px' },
-  // Help Screen
   helpContent: { color: '#d1d5db', maxWidth: '600px', textAlign: 'left', lineHeight: '1.6' },
   helpContentH3: { color: '#f9fafb', fontSize: '1.5rem', marginTop: '20px' },
-  // Modal Dialog
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
   modalBox: { backgroundColor: '#1f2937', padding: '30px', borderRadius: '12px', width: '90%', maxWidth: '400px', textAlign: 'center' },
   modalText: { color: '#f9fafb', fontSize: '1.2rem', marginBottom: '20px' },
@@ -103,14 +94,8 @@ const GameInput = ({ value, onChange, placeholder, type = 'text' }) => (
 );
 
 const NumberStepper = ({ value, onChange, min, max }) => {
-    const handleDecrement = () => {
-        const newValue = Math.max(min, value - 1);
-        onChange(newValue);
-    };
-    const handleIncrement = () => {
-        const newValue = Math.min(max, value + 1);
-        onChange(newValue);
-    };
+    const handleDecrement = () => onChange(Math.max(min, value - 1));
+    const handleIncrement = () => onChange(Math.min(max, value + 1));
     return (
         <div style={styles.numberStepper}>
             <button onClick={handleDecrement} style={styles.stepperButton}>-</button>
@@ -137,10 +122,7 @@ const ConfirmationDialog = ({ message, onConfirm, onCancel }) => (
 
 const WelcomeScreen = ({ onStart, onGoToSettings, onGoToHelp }) => (
   <>
-    <div style={styles.headerContainer}>
-        <div /> {/* Leeres div für korrekte Ausrichtung */}
-        <button onClick={onGoToHelp} style={styles.headerButton}>?</button>
-    </div>
+    <div style={styles.headerContainer}><div /><button onClick={onGoToHelp} style={styles.headerButton}>?</button></div>
     <div style={styles.screenContainer}>
         <p style={styles.title}>Imposter</p>
         <p style={styles.subtitle}>Das Spiel um Täuschung und Wahrheit</p>
@@ -152,18 +134,14 @@ const WelcomeScreen = ({ onStart, onGoToSettings, onGoToHelp }) => (
 
 const HelpScreen = ({ onBack }) => (
     <>
-        <div style={styles.headerContainer}>
-            <button onClick={onBack} style={styles.headerButton}>←</button>
-        </div>
+        <div style={styles.headerContainer}><button onClick={onBack} style={styles.headerButton}>←</button></div>
         <div style={styles.scrollableScreenContainer}>
             <p style={styles.title}>Spielanleitung</p>
             <div style={styles.helpContent}>
                 <h3 style={styles.helpContentH3}>Ziel des Spiels</h3>
                 <p>Die <strong>Bürger</strong> müssen durch kluge Hinweise und Diskussionen den oder die <strong>Imposter</strong> entlarven. Die <strong>Imposter</strong> müssen unentdeckt bleiben, indem sie so tun, als wüssten sie das geheime Wort und am Ende versuchen, es zu erraten.</p>
-                
                 <h3 style={styles.helpContentH3}>Vorbereitung</h3>
                 <p>Legt in den <strong>Einstellungen</strong> die Anzahl der Spieler und Imposter fest, vergebt Namen und wählt die Wort-Kategorien aus, mit denen ihr spielen wollt.</p>
-
                 <h3 style={styles.helpContentH3}>Spielablauf</h3>
                 <ol>
                     <li><strong>Rollen aufdecken:</strong> Jeder Spieler sieht geheim seine Rolle. Die Bürger sehen das geheime Wort, die Imposter nicht.</li>
@@ -171,7 +149,6 @@ const HelpScreen = ({ onBack }) => (
                     <li><strong>Diskussion & Abstimmung:</strong> Nachdem alle einen Hinweis gegeben haben, wird diskutiert und abgestimmt, wer der Imposter sein könnte.</li>
                     <li><strong>Auflösung:</strong> Der Spieler mit den meisten Stimmen wird aufgedeckt.</li>
                 </ol>
-
                 <h3 style={styles.helpContentH3}>Wer gewinnt?</h3>
                 <p>Die <strong>Bürger</strong> gewinnen, wenn sie einen Imposter aus der Runde wählen. Die <strong>Imposter</strong> gewinnen, wenn ein Bürger rausgewählt wird.</p>
             </div>
@@ -202,15 +179,13 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
 
     const handleAddWord = () => {
         if (newWord.trim() && !settings.customWords.includes(newWord.trim())) {
-            const updatedWords = [...settings.customWords, newWord.trim()];
-            setSettings(s => ({ ...s, customWords: updatedWords }));
+            setSettings(s => ({ ...s, customWords: [...s.customWords, newWord.trim()] }));
             setNewWord('');
         }
     };
 
     const handleDeleteWord = (wordToDelete) => {
-        const updatedWords = settings.customWords.filter(w => w !== wordToDelete);
-        setSettings(s => ({ ...s, customWords: updatedWords }));
+        setSettings(s => ({ ...s, customWords: s.customWords.filter(w => w !== wordToDelete) }));
     };
 
     const handleSave = () => {
@@ -228,12 +203,9 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
 
     return (
         <>
-            <div style={styles.headerContainer}>
-                <button onClick={handleSave} style={styles.headerButton}>←</button>
-            </div>
+            <div style={styles.headerContainer}><button onClick={handleSave} style={styles.headerButton}>←</button></div>
             <div style={styles.scrollableScreenContainer}>
                 <p style={styles.title}>Einstellungen</p>
-                
                 <div style={styles.settingsSection}>
                     <p style={styles.subtitle}>Allgemein</p>
                     <div style={styles.inputGroup}>
@@ -245,7 +217,6 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
                         <NumberStepper value={settings.numImposters} onChange={(val) => setSettings(s => ({...s, numImposters: val}))} min={1} max={settings.numPlayers - 1} />
                     </div>
                 </div>
-
                 <div style={styles.settingsSection}>
                     <p style={styles.subtitle}>Spielernamen</p>
                     {settings.playerNames.map((name, index) => (
@@ -258,7 +229,6 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
                         </div>
                     ))}
                 </div>
-
                 <div style={styles.settingsSection}>
                     <p style={styles.subtitle}>Wort-Kategorien</p>
                     {Object.keys(wordCategories).map(category => (
@@ -268,7 +238,6 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
                         </div>
                     ))}
                 </div>
-                
                 {settings.selectedCategories.includes('Eigene Begriffe') && (
                     <div style={styles.settingsSection}>
                         <p style={styles.subtitle}>Eigene Begriffe verwalten</p>
@@ -286,7 +255,6 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
                         </ul>
                     </div>
                 )}
-
                 {error && <p style={styles.errorText}>{error}</p>}
             </div>
         </>
@@ -296,44 +264,26 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
 const RevealScreen = ({ players, secretWord, onRevealComplete, onRequestExit }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
-
   const handleNext = () => {
     if (isRevealed) {
         if (currentIndex < players.length - 1) {
             setCurrentIndex(currentIndex + 1);
             setIsRevealed(false);
-        } else {
-            onRevealComplete();
-        }
-    } else {
-        setIsRevealed(true);
-    }
+        } else { onRevealComplete(); }
+    } else { setIsRevealed(true); }
   };
-
   const currentPlayer = players[currentIndex];
   const buttonText = isRevealed ? 'Verstanden & Weitergeben' : 'Rolle aufdecken';
-  
   return (
     <>
-        <div style={styles.headerContainer}>
-            <div/>
-            <button onClick={onRequestExit} style={styles.headerButton}>×</button>
-        </div>
+        <div style={styles.headerContainer}><div/><button onClick={onRequestExit} style={styles.headerButton}>×</button></div>
         <div style={styles.screenContainer}>
             <div style={styles.revealWrapper}>
                 <div style={styles.revealCard}>
                     {isRevealed ? (
-                        <div>
-                            <p style={currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>
-                                {currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`}
-                            </p>
-                        </div>
+                        <div><p style={currentPlayer.role === 'imposter' ? styles.imposterText : styles.revealText}>{currentPlayer.role === 'imposter' ? 'Du bist der Imposter!' : `Das Wort ist: ${secretWord}`}</p></div>
                     ) : (
-                        <>
-                            <img src={currentPlayer.avatarUrl} alt={`Avatar für ${currentPlayer.name}`} style={styles.avatarImage} />
-                            <p style={styles.revealText}>{currentPlayer.name} ist dran</p>
-                            <p style={styles.revealSubtext}>Bist du bereit?</p>
-                        </>
+                        <><img src={currentPlayer.avatarUrl} alt={`Avatar für ${currentPlayer.name}`} style={styles.avatarImage} /><p style={styles.revealText}>{currentPlayer.name} ist dran</p><p style={styles.revealSubtext}>Bist du bereit?</p></>
                     )}
                 </div>
                 <GameButton title={buttonText} onClick={handleNext} />
@@ -345,10 +295,7 @@ const RevealScreen = ({ players, secretWord, onRevealComplete, onRequestExit }) 
 
 const DiscussionStartScreen = ({ startingPlayer, onStartVoting, onRequestExit }) => (
     <>
-        <div style={styles.headerContainer}>
-            <div/>
-            <button onClick={onRequestExit} style={styles.headerButton}>×</button>
-        </div>
+        <div style={styles.headerContainer}><div/><button onClick={onRequestExit} style={styles.headerButton}>×</button></div>
         <div style={styles.screenContainer}>
             <p style={styles.title}>Diskussionsrunde</p>
             <div style={styles.revealCard}>
@@ -363,29 +310,21 @@ const DiscussionStartScreen = ({ startingPlayer, onStartVoting, onRequestExit })
 const VotingScreen = ({ players, onVoteComplete, onRequestExit }) => {
   const [votes, setVotes] = useState({});
   const handleVote = (voterId, votedForId) => setVotes(prev => ({ ...prev, [voterId]: votedForId }));
-
   return (
     <>
-        <div style={styles.headerContainer}>
-            <div/>
-            <button onClick={onRequestExit} style={styles.headerButton}>×</button>
-        </div>
+        <div style={styles.headerContainer}><div/><button onClick={onRequestExit} style={styles.headerButton}>×</button></div>
         <div style={styles.scrollableScreenContainer}>
-        <p style={styles.title}>Wer ist der Imposter?</p>
-        <p style={styles.subtitle}>Diskutiert und stimmt ab!</p>
-        {players.map(player => (
-            <div key={player.id} style={styles.votingRow}>
-            <p style={styles.votingPlayerText}>{player.name} stimmt für:</p>
-            <div style={styles.voteButtonsContainer}>
-                {players.map(candidate => (
-                <button key={candidate.id} style={{...styles.voteButton, ...(votes[player.id] === candidate.id && styles.voteButtonSelected)}} onClick={() => handleVote(player.id, candidate.id)}>
-                    {candidate.name}
-                </button>
-                ))}
-            </div>
-            </div>
-        ))}
-        <GameButton title="Ergebnis anzeigen" onClick={() => onVoteComplete(votes)} />
+            <p style={styles.title}>Wer ist der Imposter?</p>
+            <p style={styles.subtitle}>Diskutiert und stimmt ab!</p>
+            {players.map(player => (
+                <div key={player.id} style={styles.votingRow}>
+                    <p style={styles.votingPlayerText}>{player.name} stimmt für:</p>
+                    <div style={styles.voteButtonsContainer}>
+                        {players.map(candidate => (<button key={candidate.id} style={{...styles.voteButton, ...(votes[player.id] === candidate.id && styles.voteButtonSelected)}} onClick={() => handleVote(player.id, candidate.id)}>{candidate.name}</button>))}
+                    </div>
+                </div>
+            ))}
+            <GameButton title="Ergebnis anzeigen" onClick={() => onVoteComplete(votes)} />
         </div>
     </>
   );
@@ -395,16 +334,12 @@ const ResultScreen = ({ players, votes, onPlayAgain }) => {
   const voteCounts = useCallback(() => {
     const counts = {};
     players.forEach(p => { counts[p.id] = 0; });
-    Object.values(votes).forEach(votedForId => {
-      if (counts[votedForId] !== undefined) counts[votedForId]++;
-    });
+    Object.values(votes).forEach(votedForId => { if (counts[votedForId] !== undefined) counts[votedForId]++; });
     return counts;
   }, [votes, players])();
-
   const maxVotes = Math.max(...Object.values(voteCounts));
   const votedOutPlayers = players.filter(p => voteCounts[p.id] === maxVotes && maxVotes > 0);
   const impostersFound = votedOutPlayers.some(p => p.role === 'imposter');
-
   return (
     <div style={styles.scrollableScreenContainer}>
       <p style={styles.title}>{impostersFound ? 'Die Bürger gewinnen!' : 'Die Imposter gewinnen!'}</p>
@@ -425,7 +360,7 @@ const ResultScreen = ({ players, votes, onPlayAgain }) => {
 
 // --- Haupt-App-Komponente ---
 export default function App() {
-  const [gameState, setGameState] = useState('loading'); // Start im Ladezustand
+  const [gameState, setGameState] = useState('loading');
   const [players, setPlayers] = useState([]);
   const [revealOrder, setRevealOrder] = useState([]);
   const [startingPlayer, setStartingPlayer] = useState(null);
@@ -443,13 +378,11 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.overscrollBehaviorY = 'contain';
-
     const loadData = async () => {
         try {
             const response = await fetch('/word-categories.json');
             const categoriesData = await response.json();
             setWordCategories(categoriesData);
-
             const savedSettings = localStorage.getItem(STORAGE_KEY);
             if (savedSettings) {
                 const parsed = JSON.parse(savedSettings);
@@ -460,16 +393,10 @@ export default function App() {
                 setSettings(parsed);
             }
             setGameState('welcome');
-        } catch (error) {
-            console.error("Fehler beim Initialisieren der App:", error);
-        }
+        } catch (error) { console.error("Fehler beim Initialisieren der App:", error); }
     };
-
     loadData();
-    
-    return () => {
-        document.body.style.overscrollBehaviorY = 'auto';
-    };
+    return () => { document.body.style.overscrollBehaviorY = 'auto'; };
   }, []);
 
   const handleSaveSettings = (newSettings) => {
@@ -481,34 +408,24 @@ export default function App() {
   };
 
   const handleStartGame = () => {
+    if (!wordCategories) return;
     const { numImposters, playerNames, selectedCategories, customWords } = settings;
-    
     let wordPool = [];
     selectedCategories.forEach(category => {
-        if (category === 'Eigene Begriffe') {
-            wordPool.push(...customWords);
-        } else {
-            wordPool.push(...(wordCategories[category] || []));
-        }
+        if (category === 'Eigene Begriffe') { wordPool.push(...customWords); } 
+        else { wordPool.push(...(wordCategories[category] || [])); }
     });
-
     if (wordPool.length === 0) {
         alert("Keine Wörter zum Spielen vorhanden! Bitte wähle in den Einstellungen Kategorien aus oder füge eigene Begriffe hinzu.");
         return;
     }
-    
     const finalPlayerNames = playerNames.map((name, i) => name.trim() === '' ? `Spieler ${i + 1}` : name.trim());
-
     let playerArray = finalPlayerNames.map((name, i) => ({
       id: i + 1, name, role: 'citizen',
       avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}`
     }));
-
     const tempShuffled = shuffleArray([...playerArray]);
-    for (let i = 0; i < numImposters; i++) {
-        if(tempShuffled[i]) tempShuffled[i].role = 'imposter';
-    }
-
+    for (let i = 0; i < numImposters; i++) { if(tempShuffled[i]) tempShuffled[i].role = 'imposter'; }
     setPlayers(tempShuffled.sort((a, b) => a.id - b.id));
     setRevealOrder(shuffleArray([...tempShuffled]));
     setSecretWord(getRandomElement(wordPool));
@@ -526,51 +443,25 @@ export default function App() {
   };
 
   const nonScrollableStates = ['welcome', 'reveal', 'discussionStart'];
-  const safeAreaStyle = {
-    ...styles.safeArea,
-    overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto',
-  };
+  const safeAreaStyle = { ...styles.safeArea, overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto' };
 
-  let screenContent;
-
-  if (gameState === 'loading') {
-    screenContent = <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
-  } else {
+  const CurrentScreen = () => {
       switch (gameState) {
-          case 'settings':
-              screenContent = <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
-              break;
-          case 'help':
-              screenContent = <HelpScreen onBack={() => setGameState('welcome')} />;
-              break;
-          case 'reveal':
-              screenContent = <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => {
-                  setStartingPlayer(getRandomElement(players));
-                  setGameState('discussionStart');
-              }} />;
-              break;
-          case 'discussionStart':
-              screenContent = <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
-              break;
-          case 'voting':
-              screenContent = <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => {
-                  setVotes(finalVotes);
-                  setGameState('result');
-              }} />;
-              break;
-          case 'result':
-              screenContent = <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
-              break;
-          case 'welcome':
-          default:
-              screenContent = <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
+          case 'settings': return <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
+          case 'help': return <HelpScreen onBack={() => setGameState('welcome')} />;
+          case 'reveal': return <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => { setStartingPlayer(getRandomElement(players)); setGameState('discussionStart'); }} />;
+          case 'discussionStart': return <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
+          case 'voting': return <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => { setVotes(finalVotes); setGameState('result'); }} />;
+          case 'result': return <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
+          case 'loading': return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
+          default: return <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
       }
-  }
+  };
 
   return (
     <div style={safeAreaStyle}>
       <div style={styles.container}>
-          {screenContent}
+          <CurrentScreen />
           {showExitConfirm && (
               <ConfirmationDialog 
                   message="Möchtest du das aktuelle Spiel wirklich abbrechen?"
