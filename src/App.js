@@ -444,31 +444,28 @@ export default function App() {
   useEffect(() => {
     document.body.style.overscrollBehaviorY = 'contain';
 
-    Promise.all([
-        fetch('/word-categories.json').then(res => res.json()),
-        new Promise(resolve => {
-            try {
-                const savedSettings = localStorage.getItem(STORAGE_KEY);
-                if (savedSettings) {
-                    const parsed = JSON.parse(savedSettings);
-                    if (!parsed.selectedCategories || !parsed.customWords) {
-                        parsed.selectedCategories = ['Alltag'];
-                        parsed.customWords = [];
-                    }
-                    setSettings(parsed);
+    const loadData = async () => {
+        try {
+            const response = await fetch('/word-categories.json');
+            const categoriesData = await response.json();
+            setWordCategories(categoriesData);
+
+            const savedSettings = localStorage.getItem(STORAGE_KEY);
+            if (savedSettings) {
+                const parsed = JSON.parse(savedSettings);
+                if (!parsed.selectedCategories || !parsed.customWords) {
+                    parsed.selectedCategories = ['Alltag'];
+                    parsed.customWords = [];
                 }
-            } catch (error) {
-                console.error("Konnte Einstellungen nicht laden:", error);
+                setSettings(parsed);
             }
-            resolve();
-        })
-    ]).then(([categoriesData]) => {
-        setWordCategories(categoriesData);
-        setGameState('welcome'); // Wechsel zum Willkommensbildschirm, nachdem alles geladen ist
-    }).catch(error => {
-        console.error("Fehler beim Initialisieren der App:", error);
-        // Hier könnte man einen Fehlerbildschirm anzeigen
-    });
+            setGameState('welcome');
+        } catch (error) {
+            console.error("Fehler beim Initialisieren der App:", error);
+        }
+    };
+
+    loadData();
     
     return () => {
         document.body.style.overscrollBehaviorY = 'auto';
@@ -535,37 +532,39 @@ export default function App() {
   };
 
   let screenContent;
-  switch (gameState) {
-      case 'settings':
-          screenContent = <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
-          break;
-      case 'help':
-          screenContent = <HelpScreen onBack={() => setGameState('welcome')} />;
-          break;
-      case 'reveal':
-          screenContent = <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => {
-              setStartingPlayer(getRandomElement(players));
-              setGameState('discussionStart');
-          }} />;
-          break;
-      case 'discussionStart':
-          screenContent = <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
-          break;
-      case 'voting':
-          screenContent = <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => {
-              setVotes(finalVotes);
-              setGameState('result');
-          }} />;
-          break;
-      case 'result':
-          screenContent = <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
-          break;
-      case 'loading':
-          screenContent = <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
-          break;
-      case 'welcome':
-      default:
-          screenContent = <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
+
+  if (gameState === 'loading') {
+    screenContent = <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
+  } else {
+      switch (gameState) {
+          case 'settings':
+              screenContent = <SettingsScreen initialSettings={settings} onSave={handleSaveSettings} wordCategories={wordCategories} />;
+              break;
+          case 'help':
+              screenContent = <HelpScreen onBack={() => setGameState('welcome')} />;
+              break;
+          case 'reveal':
+              screenContent = <RevealScreen players={revealOrder} secretWord={secretWord} onRequestExit={() => setShowExitConfirm(true)} onRevealComplete={() => {
+                  setStartingPlayer(getRandomElement(players));
+                  setGameState('discussionStart');
+              }} />;
+              break;
+          case 'discussionStart':
+              screenContent = <DiscussionStartScreen startingPlayer={startingPlayer} onRequestExit={() => setShowExitConfirm(true)} onStartVoting={() => setGameState('voting')} />;
+              break;
+          case 'voting':
+              screenContent = <VotingScreen players={players} onRequestExit={() => setShowExitConfirm(true)} onVoteComplete={(finalVotes) => {
+                  setVotes(finalVotes);
+                  setGameState('result');
+              }} />;
+              break;
+          case 'result':
+              screenContent = <ResultScreen players={players} votes={votes} onPlayAgain={resetGame} />;
+              break;
+          case 'welcome':
+          default:
+              screenContent = <WelcomeScreen onStart={handleStartGame} onGoToSettings={() => setGameState('settings')} onGoToHelp={() => setGameState('help')} />;
+      }
   }
 
   return (
