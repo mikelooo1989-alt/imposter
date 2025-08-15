@@ -1,23 +1,37 @@
 import React, { useState, useCallback, useEffect } from 'react';
 
 // --- Konfiguration & Daten ---
+// Ein eindeutiger Schlüssel, um die Einstellungen des Spiels im lokalen Speicher des Browsers zu sichern.
 const STORAGE_KEY = 'imposterGameSettings_v5';
 
 // --- Hilfsfunktionen ---
+
+/**
+ * Wählt ein zufälliges Element aus einem Array aus.
+ * @param {Array} arr - Das Array, aus dem ein Element gewählt wird.
+ * @returns {*} - Ein zufälliges Element.
+ */
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+/**
+ * Mischt die Elemente eines Arrays in eine zufällige Reihenfolge (Fisher-Yates-Algorithmus).
+ * @param {Array} arr - Das zu mischende Array.
+ * @returns {Array} - Ein neues Array mit den gemischten Elementen.
+ */
 const shuffleArray = (arr) => {
-    const newArr = [...arr];
+    const newArr = [...arr]; // Erstellt eine Kopie, um das Original-Array nicht zu verändern.
     for (let i = newArr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        [newArr[i], newArr[j]] = [newArr[j], newArr[i]]; // Tauscht die Elemente.
     }
     return newArr;
 };
 
+// Definiert Emojis für die verschiedenen Wort-Kategorien zur besseren visuellen Darstellung.
 const CATEGORY_ICONS = {
   'Rund um die Welt': '🌍',
   'Unterhaltung': '🎬',
-  'Alltag': '🛒',
+  'Alltag': '�',
   'Tier & Natur': '🌳',
   'Sport & Freizeit': '⚽',
   'Wissen & Schule': '🎓',
@@ -28,7 +42,10 @@ const CATEGORY_ICONS = {
   'Eigene Begriffe': '✏️'
 };
 
+
 // --- Styling-Objekt ---
+// Hier werden alle CSS-Stile für die App als JavaScript-Objekte definiert.
+// Dies vermeidet separates CSS und hält alles in einer Datei.
 const styles = {
   safeArea: { flex: 1, backgroundColor: '#111827', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', height: '100vh' },
   container: { flex: 1, padding: 20, display: 'flex', flexDirection: 'column', position: 'relative' },
@@ -82,6 +99,7 @@ const styles = {
 };
 
 // --- UI Komponenten ---
+// Dies sind wiederverwendbare Bausteine für die Benutzeroberfläche.
 
 const GameButton = ({ title, onClick, style, disabled = false, secondary = false }) => (
   <button onClick={onClick} style={{ ...styles.button, ...(secondary && styles.buttonSecondary), ...(disabled && styles.buttonDisabled), ...style }} disabled={disabled}>
@@ -93,6 +111,7 @@ const GameInput = ({ value, onChange, placeholder, type = 'text' }) => (
   <input style={styles.input} value={value} onChange={onChange} placeholder={placeholder} type={type} />
 );
 
+// Komponente für die +/- Buttons zur Zahlenauswahl.
 const NumberStepper = ({ value, onChange, min, max }) => {
     const handleDecrement = () => onChange(Math.max(min, value - 1));
     const handleIncrement = () => onChange(Math.min(max, value + 1));
@@ -105,6 +124,7 @@ const NumberStepper = ({ value, onChange, min, max }) => {
     );
 };
 
+// Komponente für den "Wirklich abbrechen?"-Dialog.
 const ConfirmationDialog = ({ message, onConfirm, onCancel }) => (
     <div style={styles.modalOverlay}>
         <div style={styles.modalBox}>
@@ -119,6 +139,7 @@ const ConfirmationDialog = ({ message, onConfirm, onCancel }) => (
 
 
 // --- Bildschirme der App ---
+// Jeder Bildschirm ist eine eigene Komponente, was den Code übersichtlich hält.
 
 const WelcomeScreen = ({ onStart, onGoToSettings, onGoToHelp }) => (
   <>
@@ -161,6 +182,8 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
     const [newWord, setNewWord] = useState('');
     const [error, setError] = useState('');
 
+    // Dieser "useEffect"-Hook passt die Anzahl der Namensfelder automatisch an,
+    // wenn die Spieleranzahl geändert wird.
     useEffect(() => {
         const numPlayers = parseInt(settings.numPlayers, 10) || 0;
         const currentNames = settings.playerNames || [];
@@ -188,6 +211,7 @@ const SettingsScreen = ({ initialSettings, onSave, wordCategories }) => {
         setSettings(s => ({ ...s, customWords: s.customWords.filter(w => w !== wordToDelete) }));
     };
 
+    // Überprüft die Eingaben, bevor gespeichert wird.
     const handleSave = () => {
         setError('');
         if (settings.selectedCategories.length === 0) {
@@ -359,7 +383,10 @@ const ResultScreen = ({ players, votes, onPlayAgain }) => {
 };
 
 // --- Haupt-App-Komponente ---
+// Dies ist das Herzstück der App. Sie verwaltet den aktuellen Zustand (z.B. welcher Bildschirm angezeigt wird)
+// und enthält die Logik zum Starten und Zurücksetzen des Spiels.
 export default function App() {
+  // 'gameState' steuert, welcher Bildschirm gerade sichtbar ist.
   const [gameState, setGameState] = useState('loading');
   const [players, setPlayers] = useState([]);
   const [revealOrder, setRevealOrder] = useState([]);
@@ -376,6 +403,8 @@ export default function App() {
   const [secretWord, setSecretWord] = useState('');
   const [votes, setVotes] = useState({});
 
+  // Dieser useEffect-Hook wird nur einmal beim Start der App ausgeführt.
+  // Er lädt die Wortkategorien und die gespeicherten Einstellungen.
   useEffect(() => {
     document.body.style.overscrollBehaviorY = 'contain';
     const loadData = async () => {
@@ -392,7 +421,7 @@ export default function App() {
                     setSettings(parsed);
                 }
             }
-            setGameState('welcome');
+            setGameState('welcome'); // Erst wenn alles geladen ist, wird der Startbildschirm angezeigt.
         } catch (error) {
             console.error("Fehler beim Initialisieren der App:", error);
             setGameState('error');
@@ -410,9 +439,12 @@ export default function App() {
     } catch (error) { console.error("Konnte Einstellungen nicht speichern:", error); }
   };
 
+  // Diese Funktion bereitet eine neue Spielrunde vor.
   const handleStartGame = () => {
     if (!wordCategories) return;
     const { numImposters, playerNames, selectedCategories, customWords } = settings;
+    
+    // Sammelt alle Wörter aus den ausgewählten Kategorien.
     let wordPool = [];
     selectedCategories.forEach(category => {
         if (category === 'Eigene Begriffe') { wordPool.push(...customWords); } 
@@ -422,19 +454,27 @@ export default function App() {
         alert("Keine Wörter zum Spielen vorhanden! Bitte wähle in den Einstellungen Kategorien aus oder füge eigene Begriffe hinzu.");
         return;
     }
+    
+    // Füllt leere Namen mit Standardwerten.
     const finalPlayerNames = playerNames.map((name, i) => name.trim() === '' ? `Spieler ${i + 1}` : name.trim());
+    
+    // Erstellt die Spielerobjekte mit Rollen und Avataren.
     let playerArray = finalPlayerNames.map((name, i) => ({
       id: i + 1, name, role: 'citizen',
       avatarUrl: `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}`
     }));
+
+    // Mischt die Spieler und weist die Imposter-Rollen zu.
     const tempShuffled = shuffleArray([...playerArray]);
     for (let i = 0; i < numImposters; i++) { if(tempShuffled[i]) tempShuffled[i].role = 'imposter'; }
+    
     setPlayers(tempShuffled.sort((a, b) => a.id - b.id));
     setRevealOrder(shuffleArray([...tempShuffled]));
     setSecretWord(getRandomElement(wordPool));
     setGameState('reveal');
   };
 
+  // Setzt alle Spielzustände für eine neue Runde zurück.
   const resetGame = () => {
     setPlayers([]);
     setRevealOrder([]);
@@ -445,9 +485,11 @@ export default function App() {
     setGameState('welcome');
   };
 
+  // Definiert, welche Bildschirme scrollbar sind und welche nicht.
   const nonScrollableStates = ['welcome', 'reveal', 'discussionStart'];
   const safeAreaStyle = { ...styles.safeArea, overflowY: nonScrollableStates.includes(gameState) ? 'hidden' : 'auto' };
 
+  // Die Haupt-Render-Logik. Sie entscheidet, welcher Bildschirm angezeigt wird.
   const renderContent = () => {
       if (gameState === 'loading') {
           return <div style={{...styles.screenContainer, color: 'white'}}>Lade Spiel...</div>;
